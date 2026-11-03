@@ -12,7 +12,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | 3 | Calling window (pure function) | Done | — |
 | 4 | Scheduling decision (pure function, combines 2+3) | Done | — |
 | 5 | Database layer (schema, migration, idempotent insert) | Done | — |
-| 6 | `POST /callbacks` (+ concurrency test) | Not started | — |
+| 6 | `POST /callbacks` (+ concurrency test) | Done | — |
 | 7 | `GET /callbacks?lead_id=` | Not started | — |
 | 8 | React page: form + result | Not started | — |
 | 9 | React page: callback list | Not started | — |
@@ -128,6 +128,35 @@ See `api/migrations/0001_create_callbacks.sql` and
 
 ### Chunk 6 — POST /callbacks
 (to be filled in chunk 6)
+
+### Chunk 6 — POST /callbacks
+- Status code reflects whether a NEW row was created, not whether
+  scheduling succeeded: 201 for a fresh insert (scheduled or
+  not_scheduled), 200 for a replay of an existing request_id. 400 is
+  reserved for structurally broken requests only (missing/wrong-type
+  field) -- a semantically weird but well-formed request (bad timezone,
+  garbled text, a past time) flows through to decideCallback and comes
+  back as a normal not_scheduled response, not an error.
+- `app.ts` (route wiring) is split from `index.ts` (startup: migrate,
+  then listen) so tests can import the Express app directly via
+  supertest, without depending on a separately-running dev server --
+  same self-contained-test-file pattern as chunk 5.
+- `CALLING_WINDOW_START`/`CALLING_WINDOW_END` are read from env at
+  startup (`config.ts`) into the same `CallingWindowConfig` chunk 3
+  already supports -- this is the literal live-change hook for "move
+  the window to 09:00-20:00."
+- Real concurrency test (not just reasoning about it): two actual
+  concurrent HTTP requests for the same request_id via supertest +
+  Promise.all. Verified exactly one gets 201/the other 200, both
+  response bodies identical, and exactly one row in Postgres.
+- Caught during evidence: the running dev server doesn't pick up a
+  restructured entrypoint on its own in every case -- had to restart
+  the `api` container after the app.ts/index.ts split, and verified
+  with direct curl (not just the test suite, which imports the app
+  directly and wouldn't have caught a stale live server).
+
+7 tests (41 total project-wide). See `api/src/routes/callbacks.ts` /
+`.test.ts`, `api/src/app.ts`, `api/src/config.ts`.
 
 ### Chunk 7 — GET /callbacks
 (to be filled in chunk 7)

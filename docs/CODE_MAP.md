@@ -12,8 +12,23 @@ live change in the review call.
 
 ## `api/`
 
-- `src/index.ts` — Express app entrypoint. Runs migrations, then starts the
-  HTTP server. Currently just `GET /health`.
+- `src/index.ts` — startup only: runs migrations, loads the window config,
+  builds the app via `createApp`, starts listening.
+- `src/app.ts` — builds the Express app (middleware, routes) given a
+  `Pool` and a `CallingWindowConfig`. Split from `index.ts` so tests can
+  import it directly without a running server.
+- `src/config.ts` — `loadCallingWindowConfig`: reads
+  `CALLING_WINDOW_START`/`CALLING_WINDOW_END` from env, falls back to the
+  Mon-Fri 08:00-21:00 default. This is the live "move the window" hook.
+- `src/routes/callbacks.ts` — `POST /callbacks`: validates request shape
+  (400 only for structurally broken input), calls `decideCallback`, then
+  `insertOrGetCallback`. 201 for a fresh insert, 200 for a replay,
+  regardless of scheduled vs. not_scheduled.
+- `src/routes/callbacks.test.ts` — 7 tests: validation (400s), both
+  scheduling outcomes end to end over real HTTP, a sequential duplicate,
+  and a real concurrent duplicate (two actual simultaneous requests via
+  supertest + Promise.all) proving exactly one insert and identical
+  responses.
 - `src/db/pool.ts` — the single `pg.Pool`, built from `DATABASE_URL`.
 - `src/db/migrate.ts` — migration runner: creates `schema_migrations` if
   missing, applies any new `.sql` file in `api/migrations/` in filename
@@ -49,8 +64,7 @@ live change in the review call.
 - `src/scheduling/decision.ts` — pure function `decideCallback`: wires
   parser -> past-time check -> window in a fixed order into one result,
   `{ status: "scheduled", ... }` or `{ status: "not_scheduled", reason }`.
-  No DB, no HTTP. This is the function chunk 6's POST /callbacks will
-  call.
+  No DB, no HTTP. Called by `routes/callbacks.ts`.
 - `src/scheduling/decision.test.ts` — 7 unit tests covering both window
   outcomes end to end, unparseable text, past-time rejection (including
   a past time that's also outside window hours, proving the check order),

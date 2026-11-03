@@ -16,7 +16,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | 7 | `GET /callbacks?lead_id=` | Done | — |
 | 8 | React page: form + result | Done | — |
 | 9 | React page: callback list | Done | — |
-| 10 | Wrap-up: change drill, README, design note, time spent | Not started | — |
+| 10 | Wrap-up: change drill, README, design note, time spent | Done | — |
 
 ## Agreed edge cases per chunk
 
@@ -221,6 +221,28 @@ separately above it.
 See `web/src/CallbackList.tsx`, and the prop changes in
 `CallbackForm.tsx` / `App.tsx`.
 
+### Chunk 10 — Wrap-up
+- **Live-change drill:** rehearsed moving the calling window to
+  09:00-20:00. Confirmed the only two touch points are `.env`
+  (`CALLING_WINDOW_START`/`CALLING_WINDOW_END`) and a container restart
+  -- no code change, because `config.ts` (chunk 6) already reads the
+  window dynamically into the same `CallingWindowConfig` chunk 3 built
+  to be config-driven, not hardcoded.
+- **Final full-stack verification before submission:** `docker compose
+  down -v` + `docker rmi` (both images) to simulate a truly fresh
+  clone, then `docker compose up -d --build` from absolute zero.
+  Confirmed: migration auto-applied on an empty database with zero
+  manual steps; all 44 tests passed; both `api` and `web` type-check
+  clean; every frontend scenario (scheduled/not-moved,
+  scheduled/moved, not_scheduled, history list, empty-lead state)
+  verified live in the browser; idempotent duplicate and empty-lead
+  GET verified live via curl. Database left at zero rows for
+  submission.
+- Added `DESIGN_NOTE.md` at the repo root (decisions + why, production
+  risks, what I'd do with more time, AI use and corrections, time
+  spent) and updated `README.md` with accurate test count, the API
+  surface, and links to all docs.
+
 ## Decision log
 
 | Decision | Options considered | Why |
@@ -258,3 +280,13 @@ doc, even if a chunk is mid-flight.
 gap doesn't count against the working-time budget -- tracking active
 work time, not wall-clock time including breaks. ~2.5 active hours
 spent as of this resume point.
+
+**Final:** chunks 6-9 (API routes, concurrency test, React form, React
+list) and chunk 10 (wrap-up) completed 16:05-18:59, with a second
+~1h20m break around 17:20-18:44 (also excluded from the active total).
+Active work time: ~2h26m (chunks 0-5) + ~1h15m (chunks 6-9, start of
+10) + ~15m (final verification + wrap-up) = **~4 hours**, comfortably
+inside the 5-7 hour budget. Full-stack verification (fresh
+`docker compose down -v` + rebuild, 44/44 tests, both type-checks,
+every frontend scenario, idempotency and empty-list via curl) done
+immediately before submission -- see this chunk's notes above.

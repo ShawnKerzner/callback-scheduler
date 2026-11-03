@@ -29,11 +29,25 @@ With the stack running (`docker compose up -d`):
 docker compose exec api npm test
 ```
 
-34 tests: pure-function unit tests for the parser, calling window, and
-scheduling decision, plus integration tests for the database layer
-(idempotent insert) against the real Postgres container.
+44 tests: pure-function unit tests for the parser, calling window, and
+scheduling decision; integration tests for the database layer (idempotent
+insert) and the HTTP routes (including a real concurrency test — two
+literal simultaneous requests for the same `request_id`) against the real
+Postgres container.
 
-Design note lands in chunk 10 (wrap-up).
+## API
 
-See `docs/ARCHITECTURE.md` for the request flow and `docs/PLAN.md` for the
-chunk-by-chunk build plan and decision log.
+- `POST /callbacks` — schedules a callback or explains why it couldn't.
+  `201` on a fresh request, `200` on a replay of an existing `request_id`,
+  `400` only for a structurally invalid body.
+- `GET /callbacks?lead_id=` — a lead's callback history, newest first.
+  `400` if `lead_id` is missing, `200` + `[]` if the lead has none yet.
+
+## Docs
+
+- [`DESIGN_NOTE.md`](DESIGN_NOTE.md) — decisions and why, production risks,
+  what I'd do with more time, how AI was used, time spent.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the request flow.
+- [`docs/PLAN.md`](docs/PLAN.md) — chunk-by-chunk build log and the full
+  decision log (every option considered, not just what was chosen).
+- [`docs/CODE_MAP.md`](docs/CODE_MAP.md) — one line per file.

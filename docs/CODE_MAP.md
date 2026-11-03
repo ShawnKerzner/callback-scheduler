@@ -9,6 +9,9 @@ live change in the review call.
   volume mounts for hot reload.
 - `.env.example` / `.env` — all config, including `CALLING_WINDOW_START` /
   `CALLING_WINDOW_END` (the live-change knob).
+- `README.md` — run/test instructions, the API surface, doc links.
+- `DESIGN_NOTE.md` — decisions and why, production risks, what I'd do
+  with more time, AI use and corrections, time spent.
 
 ## `api/`
 

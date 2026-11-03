@@ -41,6 +41,13 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 ### Chunk 7 — GET /callbacks
 (to be filled in chunk 7)
 
+### Chunk 8 — React form
+- The client generates a fresh `request_id` (e.g. `crypto.randomUUID()`) on
+  every form submission — never reused across a failed attempt and its
+  retry. A `not_scheduled` result is terminal for its `request_id` (replay
+  logic would just hand back the same failure), so "fix the wording and
+  resubmit" only works as a brand-new request with a new id.
+
 ## Decision log
 
 | Decision | Options considered | Why |

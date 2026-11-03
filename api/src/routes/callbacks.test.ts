@@ -90,3 +90,59 @@ describe("POST /callbacks", () => {
     expect(count.rows[0].count).toBe(1);
   });
 });
+
+describe("GET /callbacks", () => {
+  it("1. missing lead_id -> 400", async () => {
+    const res = await request(app).get("/callbacks");
+    expect(res.status).toBe(400);
+  });
+
+  it("2. lead_id with no rows -> 200, empty array", async () => {
+    const res = await request(app).get("/callbacks").query({ lead_id: "test_http_ghost_lead" });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("3. returns only the requested lead's rows, newest received_at first", async () => {
+    const leadA = "test_http_lead_a";
+    const leadB = "test_http_lead_b";
+
+    await request(app)
+      .post("/callbacks")
+      .send(
+        sampleBody("test_http_list_a_older", {
+          lead_id: leadA,
+          received_at: "2026-11-03T10:00:00Z",
+        })
+      );
+    await request(app)
+      .post("/callbacks")
+      .send(
+        sampleBody("test_http_list_a_newer", {
+          lead_id: leadA,
+          received_at: "2026-11-04T10:00:00Z",
+          requested_text: "sometime next week", // not_scheduled, on purpose
+        })
+      );
+    await request(app)
+      .post("/callbacks")
+      .send(
+        sampleBody("test_http_list_b", {
+          lead_id: leadB,
+          received_at: "2026-11-05T10:00:00Z",
+        })
+      );
+
+    const res = await request(app).get("/callbacks").query({ lead_id: leadA });
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(2);
+    // newest received_at first
+    expect(res.body[0].request_id).toBe("test_http_list_a_newer");
+    expect(res.body[0].status).toBe("not_scheduled");
+    expect(res.body[1].request_id).toBe("test_http_list_a_older");
+    // lead B's row never appears
+    expect(res.body.some((row: { request_id: string }) => row.request_id === "test_http_list_b")).toBe(
+      false
+    );
+  });
+});

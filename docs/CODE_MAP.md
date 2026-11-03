@@ -23,12 +23,13 @@ live change in the review call.
 - `src/routes/callbacks.ts` — `POST /callbacks`: validates request shape
   (400 only for structurally broken input), calls `decideCallback`, then
   `insertOrGetCallback`. 201 for a fresh insert, 200 for a replay,
-  regardless of scheduled vs. not_scheduled.
-- `src/routes/callbacks.test.ts` — 7 tests: validation (400s), both
-  scheduling outcomes end to end over real HTTP, a sequential duplicate,
-  and a real concurrent duplicate (two actual simultaneous requests via
-  supertest + Promise.all) proving exactly one insert and identical
-  responses.
+  regardless of scheduled vs. not_scheduled. `GET /callbacks?lead_id=`:
+  400 if missing, otherwise 200 + an array (empty if no rows), newest
+  `received_at` first.
+- `src/routes/callbacks.test.ts` — 10 tests: POST validation (400s),
+  both scheduling outcomes over real HTTP, a sequential duplicate, a
+  real concurrent duplicate (proving exactly one insert), and GET's
+  missing-param/empty/ordering/lead-isolation cases.
 - `src/db/pool.ts` — the single `pg.Pool`, built from `DATABASE_URL`.
 - `src/db/migrate.ts` — migration runner: creates `schema_migrations` if
   missing, applies any new `.sql` file in `api/migrations/` in filename
@@ -42,6 +43,8 @@ live change in the review call.
 - `src/db/callbacksRepository.ts` — `insertOrGetCallback`: the
   idempotent insert (`ON CONFLICT (request_id) DO NOTHING RETURNING *`,
   re-select on conflict). This is where "exactly once" actually lives.
+  `listCallbacksByLeadId`: plain SELECT, filtered by lead_id, newest
+  `received_at` first.
 - `src/db/callbacksRepository.test.ts` — 3 integration tests against
   real Postgres: fresh insert, duplicate-with-different-body replay
   (proves the original wins and only one row exists), and a

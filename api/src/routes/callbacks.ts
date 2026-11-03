@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Pool } from "pg";
 import type { CallbackRow, NewCallbackRow } from "../db/callbacksRepository.js";
-import { insertOrGetCallback } from "../db/callbacksRepository.js";
+import { insertOrGetCallback, listCallbacksByLeadId } from "../db/callbacksRepository.js";
 import { decideCallback } from "../scheduling/decision.js";
 import type { CallingWindowConfig } from "../scheduling/window.js";
 
@@ -115,6 +115,22 @@ export function callbacksRouter(pool: Pool, windowConfig: CallingWindowConfig): 
       res.status(wasReplay ? 200 : 201).json(toResponseBody(row));
     } catch (err) {
       console.error("POST /callbacks failed:", err);
+      res.status(500).json({ error: "Internal server error." });
+    }
+  });
+
+  router.get("/callbacks", async (req, res) => {
+    const leadId = req.query.lead_id;
+    if (typeof leadId !== "string" || leadId === "") {
+      res.status(400).json({ error: '"lead_id" query parameter is required.' });
+      return;
+    }
+
+    try {
+      const rows = await listCallbacksByLeadId(pool, leadId);
+      res.status(200).json(rows.map(toResponseBody));
+    } catch (err) {
+      console.error("GET /callbacks failed:", err);
       res.status(500).json({ error: "Internal server error." });
     }
   });

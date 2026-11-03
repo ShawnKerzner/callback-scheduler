@@ -81,3 +81,11 @@ export async function insertOrGetCallback(
 
   return { row: existing.rows[0], wasReplay: true };
 }
+
+export async function listCallbacksByLeadId(pool: Pool, leadId: string): Promise<CallbackRow[]> {
+  const result = await pool.query<CallbackRow>(
+    "SELECT * FROM callbacks WHERE lead_id = $1 ORDER BY received_at DESC",
+    [leadId]
+  );
+  return result.rows;
+}

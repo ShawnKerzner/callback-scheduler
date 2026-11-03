@@ -13,7 +13,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | 4 | Scheduling decision (pure function, combines 2+3) | Done | — |
 | 5 | Database layer (schema, migration, idempotent insert) | Done | — |
 | 6 | `POST /callbacks` (+ concurrency test) | Done | — |
-| 7 | `GET /callbacks?lead_id=` | Not started | — |
+| 7 | `GET /callbacks?lead_id=` | Done | — |
 | 8 | React page: form + result | Not started | — |
 | 9 | React page: callback list | Not started | — |
 | 10 | Wrap-up: change drill, README, design note, time spent | Not started | — |
@@ -160,6 +160,20 @@ See `api/migrations/0001_create_callbacks.sql` and
 
 ### Chunk 7 — GET /callbacks
 (to be filled in chunk 7)
+
+### Chunk 7 — GET /callbacks
+- Ordering: newest `received_at` first -- natural read for a history
+  list.
+- Empty result is `200` + `[]`, not `404` -- a lead with zero callbacks
+  yet is a normal state, not an error. `400` is reserved for the one
+  real error: no `lead_id` given at all.
+- This is the first endpoint to surface chunk 0's "store every outcome"
+  decision -- scheduled and not_scheduled rows appear together in one
+  list.
+
+3 tests (44 total project-wide). See `listCallbacksByLeadId` in
+`api/src/db/callbacksRepository.ts` and the `GET /callbacks` route in
+`api/src/routes/callbacks.ts`.
 
 ### Chunk 8 — React form
 - `requested_text` stays a free-text input, not a time picker, and the

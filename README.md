@@ -23,8 +23,15 @@ re-run `docker compose up -d --build`.
 
 ## Test
 
-Test runner setup lands in chunk 2 (`cd api && npm test`, once there's logic
-worth testing).
+With the stack running (`docker compose up -d`):
+
+```bash
+docker compose exec api npm test
+```
+
+34 tests: pure-function unit tests for the parser, calling window, and
+scheduling decision, plus integration tests for the database layer
+(idempotent insert) against the real Postgres container.
 
 Design note lands in chunk 10 (wrap-up).
 

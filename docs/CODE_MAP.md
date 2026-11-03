@@ -20,8 +20,17 @@ live change in the review call.
   order, inside a transaction per file. Exported as `runMigrations()` so
   `index.ts` can run it on startup; also runnable standalone via
   `npm run migrate`.
-- `api/migrations/` — empty for now; chunk 5 adds the first real migration
-  (the `callbacks` table).
+- `api/migrations/0001_create_callbacks.sql` — the `callbacks` table:
+  `request_id` as primary key, `status` + `reason`, requested/scheduled
+  times as `TIMESTAMPTZ` (null together exactly when not_scheduled, a
+  CHECK constraint enforces it), `moved`, an index on `lead_id`.
+- `src/db/callbacksRepository.ts` — `insertOrGetCallback`: the
+  idempotent insert (`ON CONFLICT (request_id) DO NOTHING RETURNING *`,
+  re-select on conflict). This is where "exactly once" actually lives.
+- `src/db/callbacksRepository.test.ts` — 3 integration tests against
+  real Postgres: fresh insert, duplicate-with-different-body replay
+  (proves the original wins and only one row exists), and a
+  not_scheduled row's null time columns.
 - `src/scheduling/parser.ts` — pure function `parseRequestedTime`: text +
   `received_at` + `lead_timezone` -> a local date-time in the lead's zone,
   or `not_understood` + a reason. No DB, no HTTP. Does not enforce the

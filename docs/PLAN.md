@@ -11,7 +11,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | 2 | Parser (pure function) | Done | — |
 | 3 | Calling window (pure function) | Done | — |
 | 4 | Scheduling decision (pure function, combines 2+3) | Done | — |
-| 5 | Database layer (schema, migration, idempotent insert) | Not started | — |
+| 5 | Database layer (schema, migration, idempotent insert) | Done | — |
 | 6 | `POST /callbacks` (+ concurrency test) | Not started | — |
 | 7 | `GET /callbacks?lead_id=` | Not started | — |
 | 8 | React page: form + result | Not started | — |
@@ -104,6 +104,27 @@ rejection (including a past time that's also outside window hours, to
 prove the ordering), an invalid zone passed straight through, and a
 non-US lead zone (Tokyo) end to end. See
 `api/src/scheduling/decision.test.ts`.
+
+### Chunk 5 — Database layer
+- `request_id` is the primary key directly, no surrogate id.
+- Time columns (`received_at`, `requested_local_time`,
+  `scheduled_local_time`, `created_at`) are all `TIMESTAMPTZ`, storing
+  the instant only -- `lead_timezone` is stored once, separately, so any
+  viewer's local time is derivable later without re-parsing anything.
+- `requested_local_time`/`scheduled_local_time` are both NULL whenever
+  `status = 'not_scheduled'`, regardless of cause -- stays uniform with
+  chunk 4's output; a DB-level CHECK constraint enforces this invariant.
+- From this chunk on, `npm test` requires Postgres running -- expected,
+  not scope creep, since the brief's own design questions ask how the
+  concurrency test runs against a real Postgres.
+- Idempotent insert proven both in tests (3 tests, sequential duplicate)
+  and live in the DB: a duplicate delivery with a different body left
+  the original row's `requested_text` untouched, and exactly one row
+  existed for that `request_id`. A true concurrent race (two real
+  simultaneous connections) is chunk 6's job.
+
+See `api/migrations/0001_create_callbacks.sql` and
+`api/src/db/callbacksRepository.ts` / `.test.ts`.
 
 ### Chunk 6 — POST /callbacks
 (to be filled in chunk 6)

@@ -14,7 +14,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | 5 | Database layer (schema, migration, idempotent insert) | Done | — |
 | 6 | `POST /callbacks` (+ concurrency test) | Done | — |
 | 7 | `GET /callbacks?lead_id=` | Done | — |
-| 8 | React page: form + result | Not started | — |
+| 8 | React page: form + result | Done | — |
 | 9 | React page: callback list | Not started | — |
 | 10 | Wrap-up: change drill, README, design note, time spent | Not started | — |
 
@@ -59,9 +59,6 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 13 unit tests cover all of the above, including a DST-crossing `in 2
 hours` and a `tomorrow` said at 23:50 local that crosses the UTC day
 boundary — see `api/src/scheduling/parser.test.ts`.
-
-### Chunk 3 — Calling window
-(to be filled in chunk 3)
 
 ### Chunk 3 — Calling window
 - Window boundaries are inclusive on both ends (08:00 and 21:00 exactly
@@ -127,9 +124,6 @@ See `api/migrations/0001_create_callbacks.sql` and
 `api/src/db/callbacksRepository.ts` / `.test.ts`.
 
 ### Chunk 6 — POST /callbacks
-(to be filled in chunk 6)
-
-### Chunk 6 — POST /callbacks
 - Status code reflects whether a NEW row was created, not whether
   scheduling succeeded: 201 for a fresh insert (scheduled or
   not_scheduled), 200 for a replay of an existing request_id. 400 is
@@ -157,9 +151,6 @@ See `api/migrations/0001_create_callbacks.sql` and
 
 7 tests (41 total project-wide). See `api/src/routes/callbacks.ts` /
 `.test.ts`, `api/src/app.ts`, `api/src/config.ts`.
-
-### Chunk 7 — GET /callbacks
-(to be filled in chunk 7)
 
 ### Chunk 7 — GET /callbacks
 - Ordering: newest `received_at` first -- natural read for a history
@@ -192,6 +183,25 @@ See `api/migrations/0001_create_callbacks.sql` and
   retry. A `not_scheduled` result is terminal for its `request_id` (replay
   logic would just hand back the same failure), so "fix the wording and
   resubmit" only works as a brand-new request with a new id.
+
+**Built:** one reusable `CallbackResult` component (handles both
+scheduled and not_scheduled) instead of a one-off result display --
+chunk 9 reuses it per list row rather than duplicating formatting logic.
+Covers lead-local requested/scheduled times, viewer-local scheduled time
+(via the browser's own `Intl` zone), and the move reason when
+applicable. `lead_timezone` is a `<select>` from
+`Intl.supportedValuesOf("timeZone")` (every real IANA zone, no new
+dependency) instead of free text.
+
+Caught during evidence: Vite's default file watcher doesn't reliably see
+changes through a Windows-host Docker bind mount (no inotify events
+across that boundary) -- added `usePolling` to `web/vite.config.ts`.
+Confirmed in the browser: a moved/scheduled submission (Chicago 22:00
+Fri -> Chicago 08:00 Mon, correctly converted to the viewer's zone too)
+and a not_scheduled submission both render correctly.
+
+See `web/src/CallbackForm.tsx`, `CallbackResult.tsx`, `formatTime.ts`,
+`types.ts`.
 
 ## Decision log
 

@@ -76,5 +76,16 @@ live change in the review call.
 ## `web/`
 
 - `src/main.tsx` — React root, mounts `<App />`.
-- `src/App.tsx` — currently a hello page: calls `GET /health` on the API and
-  shows reachable/unreachable. Chunk 8 replaces this with the real form.
+- `src/App.tsx` — renders `<CallbackForm />`.
+- `src/CallbackForm.tsx` — the form: lead id (free text), lead time zone
+  (`<select>` of every IANA zone via `Intl.supportedValuesOf`), requested
+  text (free text). Generates a fresh `request_id` and `received_at` per
+  submit, POSTs to the API, renders `<CallbackResult />` with whatever
+  came back.
+- `src/CallbackResult.tsx` — reusable display for one callback: the
+  not_scheduled-with-reason case, or the scheduled case (lead-local
+  requested/scheduled times, viewer-local scheduled time, move reason
+  when `moved`). Chunk 9 reuses this per list row.
+- `src/formatTime.ts` — `formatInZone` (Intl.DateTimeFormat wrapper) and
+  `BROWSER_TIME_ZONE` (the viewer's own zone, resolved once).
+- `src/types.ts` — `CallbackResponse`, matching the API's JSON shape.

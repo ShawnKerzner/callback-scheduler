@@ -9,7 +9,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | 0 | Scope and architecture | Done | — |
 | 1 | One-command skeleton (docker compose: Postgres + API health + web hello) | Done | — |
 | 2 | Parser (pure function) | Done | — |
-| 3 | Calling window (pure function) | Not started | — |
+| 3 | Calling window (pure function) | Done | — |
 | 4 | Scheduling decision (pure function, combines 2+3) | Not started | — |
 | 5 | Database layer (schema, migration, idempotent insert) | Not started | — |
 | 6 | `POST /callbacks` (+ concurrency test) | Not started | — |
@@ -62,6 +62,28 @@ boundary — see `api/src/scheduling/parser.test.ts`.
 
 ### Chunk 3 — Calling window
 (to be filled in chunk 3)
+
+### Chunk 3 — Calling window
+- Window boundaries are inclusive on both ends (08:00 and 21:00 exactly
+  are both allowed) -- settled directly by the brief's wording ("before
+  08:00" / "after 21:00" are strict).
+- Config is one object (window hours + working days together), not
+  hardcoded Mon-Fri, so the live-change drill (window or working-day
+  changes) only ever touches a config value.
+- "Move to same day" (before-window case) has no working-day qualifier
+  -- applies even on a weekend. "Move to next working day" (after-window
+  case) is the only branch that skips non-working days.
+- Pure function has no concept of "today" or past times -- scope stays
+  separate from chunk 4's past-time policy.
+- Safety guard: next-working-day search is capped at 14 days and throws
+  rather than looping forever on a nonsensical config (e.g. empty
+  `workingDays`).
+
+11 tests cover both boundaries, before/after in both directions, a
+weekend inside vs. before the window, Friday/Saturday-night rollover
+skipping the weekend, a non-Mon-Fri working week (proving config, not
+hardcoding, drives the skip), and the brief's own 09:00-20:00 live-change
+example. See `api/src/scheduling/window.test.ts`.
 
 ### Chunk 4 — Scheduling decision
 (to be filled in chunk 4)

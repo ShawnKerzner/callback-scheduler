@@ -29,6 +29,14 @@ live change in the review call.
 - `src/scheduling/parser.test.ts` — 13 unit tests covering all 4 supported
   phrasings, the same-weekday roll-forward rule, a UTC/local day-boundary
   case, a DST-crossing case, and the "no guessing" / invalid-zone cases.
+- `src/scheduling/window.ts` — pure function `applyCallingWindow`: a
+  local date-time + a `CallingWindowConfig` (window hours, working days)
+  -> the actual time we're allowed to call, plus whether/why it moved.
+  No DB, no HTTP, no idea what "today" is.
+- `src/scheduling/window.test.ts` — 11 unit tests covering both window
+  boundaries, before/after moves, weekend-inside vs. weekend-before the
+  window, Friday/Saturday-night rollover, a non-Mon-Fri working week, and
+  the brief's 09:00-20:00 live-change example.
 
 ## `web/`
 

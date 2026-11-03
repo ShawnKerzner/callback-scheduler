@@ -43,4 +43,4 @@ No AI-suggested design decision was overridden outright in the end — several w
 
 ## Time spent
 
-Roughly 4 hours of active work, across a few sessions with breaks in between (tracked in `docs/PLAN.md`'s time log).
+Roughly 7 hours.

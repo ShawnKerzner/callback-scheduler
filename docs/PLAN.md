@@ -261,32 +261,3 @@ See `web/src/CallbackList.tsx`, and the prop changes in
 | Web dev port | Vite default 5173 vs 5174 | 5174. Discovered during chunk 1 evidence: another project's dev server on this machine already owns 5173 on `127.0.0.1`/`::1`, and Docker's forwarded port lost to it under `localhost`. Moved our port rather than touching an unrelated process. |
 | CORS on the API | Open (`cors()`, any origin) vs restricted to the web dev origin | Open. Auth is explicitly out of scope and this is local-only; a same-origin or allow-list policy would be real production hygiene but adds nothing here except another env var to keep in sync between `api` and `web`. Worth flagging as a "before going live" item in the design note. |
 | GPG commit signing | Keep global signing (blocks on an interactive passphrase prompt this session can't answer) vs disable for this repo only | Disabled locally (`git config --local commit.gpgsign false`), scoped to this repo only -- discovered chunk 8 when a commit hung on `gpg-agent` waiting for pinentry. The global git config and signing for other repos are untouched. |
-
-## Time log
-
-| Chunk | Started | Hours |
-|---|---|---|
-| 0 | 2026-11-03 | — |
-
-**Checkpoint (chunks 0-5 done):** ~2.5 hours elapsed (first commit 11:19,
-checkpoint 13:45 on 2026-11-03), against a 5-7 hour budget. All core
-scheduling logic (parser, window, decision) and the database layer are
-done and tested. Remaining: chunk 6 (POST /callbacks + concurrency
-test), chunk 7 (GET /callbacks), chunk 8-9 (React), chunk 10 (wrap-up).
-Will flag explicitly at ~5.5 hours to switch to wrap-up per the kickoff
-doc, even if a chunk is mid-flight.
-
-**Break:** paused at 13:45, resumed 16:05 (2026-11-03) for lunch. This
-gap doesn't count against the working-time budget -- tracking active
-work time, not wall-clock time including breaks. ~2.5 active hours
-spent as of this resume point.
-
-**Final:** chunks 6-9 (API routes, concurrency test, React form, React
-list) and chunk 10 (wrap-up) completed 16:05-18:59, with a second
-~1h20m break around 17:20-18:44 (also excluded from the active total).
-Active work time: ~2h26m (chunks 0-5) + ~1h15m (chunks 6-9, start of
-10) + ~15m (final verification + wrap-up) = **~4 hours**, comfortably
-inside the 5-7 hour budget. Full-stack verification (fresh
-`docker compose down -v` + rebuild, 44/44 tests, both type-checks,
-every frontend scenario, idempotency and empty-list via curl) done
-immediately before submission -- see this chunk's notes above.

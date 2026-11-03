@@ -24,8 +24,14 @@ Full option-by-option reasoning for every decision, including the ones above and
 
 ## What I'd do with more time
 
+Full roadmap (foundational pieces first, then features) is in the
+README's ["What I'd build next"](README.md#what-id-build-next) section —
+the dialer worker, observability, more forgiving phrasing, voice-to-text
+input, calendar invite integration, and scheduling-pattern analytics.
+
+Smaller engineering housekeeping, not covered there:
+
 - A `leads` table (even a minimal one) instead of a bare `lead_id` string, to support a non-typo-prone picker in the UI and basic lead metadata.
-- More supported phrasings (12-hour time like "3pm", abbreviated weekdays) — the brief only requires 4, so I kept scope tight.
 - A CI pipeline running the test suite on every push.
 - Frontend automated tests — explicitly optional per the brief, skipped to spend the time budget on the backend logic and the live-demo rehearsal instead.
 

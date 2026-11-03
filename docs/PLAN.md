@@ -173,3 +173,11 @@ See `api/migrations/0001_create_callbacks.sql` and
 | Chunk | Started | Hours |
 |---|---|---|
 | 0 | 2026-11-03 | — |
+
+**Checkpoint (chunks 0-5 done):** ~2.5 hours elapsed (first commit 11:19,
+checkpoint 13:45 on 2026-11-03), against a 5-7 hour budget. All core
+scheduling logic (parser, window, decision) and the database layer are
+done and tested. Remaining: chunk 6 (POST /callbacks + concurrency
+test), chunk 7 (GET /callbacks), chunk 8-9 (React), chunk 10 (wrap-up).
+Will flag explicitly at ~5.5 hours to switch to wrap-up per the kickoff
+doc, even if a chunk is mid-flight.

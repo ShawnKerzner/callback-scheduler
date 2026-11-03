@@ -15,8 +15,13 @@ type SubmitState =
   | { status: "success"; result: CallbackResponse }
   | { status: "error"; message: string };
 
-export function CallbackForm() {
-  const [leadId, setLeadId] = useState("lead_demo_1");
+interface CallbackFormProps {
+  leadId: string;
+  onLeadIdChange: (leadId: string) => void;
+  onSubmitted: () => void;
+}
+
+export function CallbackForm({ leadId, onLeadIdChange, onSubmitted }: CallbackFormProps) {
   const [leadTimezone, setLeadTimezone] = useState(DEFAULT_ZONE);
   const [requestedText, setRequestedText] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
@@ -52,6 +57,7 @@ export function CallbackForm() {
       const result = (await res.json()) as CallbackResponse;
       setSubmitState({ status: "success", result });
       setRequestedText("");
+      onSubmitted();
     } catch {
       setSubmitState({ status: "error", message: "Could not reach the API. Is it running?" });
     }
@@ -67,7 +73,7 @@ export function CallbackForm() {
       >
         <label>
           Lead id
-          <input value={leadId} onChange={(e) => setLeadId(e.target.value)} required />
+          <input value={leadId} onChange={(e) => onLeadIdChange(e.target.value)} required />
         </label>
 
         <label>

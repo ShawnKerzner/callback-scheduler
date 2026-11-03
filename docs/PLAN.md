@@ -15,7 +15,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | 6 | `POST /callbacks` (+ concurrency test) | Done | — |
 | 7 | `GET /callbacks?lead_id=` | Done | — |
 | 8 | React page: form + result | Done | — |
-| 9 | React page: callback list | Not started | — |
+| 9 | React page: callback list | Done | — |
 | 10 | Wrap-up: change drill, README, design note, time spent | Not started | — |
 
 ## Agreed edge cases per chunk
@@ -202,6 +202,24 @@ and a not_scheduled submission both render correctly.
 
 See `web/src/CallbackForm.tsx`, `CallbackResult.tsx`, `formatTime.ts`,
 `types.ts`.
+
+### Chunk 9 — React page: callback list
+Mostly wiring, thanks to chunk 8's reusable `CallbackResult`: no new
+display logic needed. `leadId` state lifted from `CallbackForm` into
+`App.tsx` so the form and the list share it -- the list always shows
+whoever's id is currently in the form. `CallbackForm` gained an
+`onSubmitted` callback; `App.tsx` bumps a `refreshKey` counter on
+success, and the list's fetch effect depends on `[leadId, refreshKey]`,
+so a new submission appears immediately with no page reload.
+
+Verified in the browser: two submissions for the same lead (one
+scheduled, one not_scheduled) both appeared newest-first with no
+reload; switching the lead id switched the list to that lead's (empty)
+history, while the form's own last-result card stayed showing
+separately above it.
+
+See `web/src/CallbackList.tsx`, and the prop changes in
+`CallbackForm.tsx` / `App.tsx`.
 
 ## Decision log
 

@@ -76,12 +76,17 @@ live change in the review call.
 ## `web/`
 
 - `src/main.tsx` — React root, mounts `<App />`.
-- `src/App.tsx` — renders `<CallbackForm />`.
-- `src/CallbackForm.tsx` — the form: lead id (free text), lead time zone
-  (`<select>` of every IANA zone via `Intl.supportedValuesOf`), requested
-  text (free text). Generates a fresh `request_id` and `received_at` per
-  submit, POSTs to the API, renders `<CallbackResult />` with whatever
-  came back.
+- `src/App.tsx` — owns `leadId` and a `refreshKey` counter; renders
+  `<CallbackForm />` and `<CallbackList />`, wired to the same `leadId`.
+- `src/CallbackForm.tsx` — the form: lead id (controlled via props, free
+  text), lead time zone (`<select>` of every IANA zone via
+  `Intl.supportedValuesOf`), requested text (free text). Generates a
+  fresh `request_id` and `received_at` per submit, POSTs to the API,
+  renders `<CallbackResult />` with whatever came back, then calls
+  `onSubmitted()`.
+- `src/CallbackList.tsx` — fetches `GET /callbacks?lead_id=` whenever
+  `leadId` or `refreshKey` changes; renders one `<CallbackResult />` per
+  row (no new per-row logic). Handles loading/empty/error states.
 - `src/CallbackResult.tsx` — reusable display for one callback: the
   not_scheduled-with-reason case, or the scheduled case (lead-local
   requested/scheduled times, viewer-local scheduled time, move reason

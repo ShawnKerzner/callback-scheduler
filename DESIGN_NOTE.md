@@ -40,7 +40,3 @@ Smaller engineering housekeeping, not covered there:
 I used Claude Code (Sonnet) to implement the entire codebase, chunk by chunk, under a strict process: for every real decision it gave me 2–3 options with trade-offs and a recommendation, I decided; it showed real evidence (test output, `curl`, `psql`, screenshots) rather than asserting things worked; and I asked it to walk back through its own code at least twice for a critical read (it flagged and fixed duplicated validation logic in the parser on its own, after I asked whether the code looked "too nested" — its reasoning for keeping the function flat rather than splitting it into five smaller ones held up, documented in `docs/PLAN.md`).
 
 No AI-suggested design decision was overridden outright in the end — several were challenged and defended before I accepted them (the parser's single-function structure; treating `in N hours` as elapsed time rather than wall-clock arithmetic, which it had initially asserted as settled fact instead of flagging as a real decision, and corrected once I pushed back). `docs/AI_CORRECTIONS.md` is the running log for this and is currently empty, accurately — not because nothing was questioned, but because nothing was ultimately overridden.
-
-## Time spent
-
-Roughly 7 hours.

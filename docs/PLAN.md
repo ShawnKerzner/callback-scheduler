@@ -73,6 +73,17 @@ boundary — see `api/src/scheduling/parser.test.ts`.
 (to be filled in chunk 7)
 
 ### Chunk 8 — React form
+- `requested_text` stays a free-text input, not a time picker, and the
+  frontend does not pre-validate it against the calling window. The real
+  input in production is a lead's spoken words on a call, which can't be
+  constrained by a UI widget; restricting the form would duplicate the
+  window logic client-side (two sources of truth) and would make it
+  impossible to demo the window-move / not-scheduled behavior through the
+  page. The API is the only place the window rule lives.
+- When a request is moved, show both times clearly inline on the result
+  (not a modal): "You asked for: X. Scheduled for: Y — outside calling
+  hours, moved to the next available time." This is exactly why the
+  brief requires storing both the requested and scheduled time.
 - The client generates a fresh `request_id` (e.g. `crypto.randomUUID()`) on
   every form submission — never reused across a failed attempt and its
   retry. A `not_scheduled` result is terminal for its `request_id` (replay

@@ -10,6 +10,9 @@ export type ParsedTime =
   | { kind: "understood"; localDateTime: DateTime }
   | { kind: "not_understood"; reason: string };
 
+// Luxon's DateTime.weekday uses ISO 8601 numbering (1 = Monday ... 7 =
+// Sunday) -- this map has to agree with that, since we compare directly
+// against `now.weekday` below.
 const WEEKDAYS: Record<string, number> = {
   monday: 1,
   tuesday: 2,
@@ -34,8 +37,27 @@ function understood(localDateTime: DateTime): ParsedTime {
   return { kind: "understood", localDateTime };
 }
 
-function isValidHourMinute(hour: number, minute: number): boolean {
-  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+// Shared by the "tomorrow" and "weekday" branches, which both extract an
+// HH:MM pair and need the same validity check.
+function parseTimeOfDay(hourStr: string, minuteStr: string): { hour: number; minute: number } | null {
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    return null;
+  }
+  return { hour, minute };
+}
+
+// Shared by the "ISO with offset" and "ISO without offset" branches, which
+// differ only in how Luxon should resolve the zone.
+function parseIso(requestedText: string, leadTimezone: string, hasOffset: boolean): ParsedTime {
+  const parsed = hasOffset
+    ? DateTime.fromISO(requestedText, { setZone: true })
+    : DateTime.fromISO(requestedText, { zone: leadTimezone });
+  if (!parsed.isValid) {
+    return notUnderstood(`"${requestedText}" looks like an ISO date-time but isn't valid.`);
+  }
+  return understood(hasOffset ? parsed.setZone(leadTimezone) : parsed);
 }
 
 /**
@@ -71,14 +93,13 @@ export function parseRequestedTime(input: ParseInput): ParsedTime {
 
   const tomorrowMatch = requestedText.match(TOMORROW_AT_TIME);
   if (tomorrowMatch) {
-    const hour = Number(tomorrowMatch[1]);
-    const minute = Number(tomorrowMatch[2]);
-    if (!isValidHourMinute(hour, minute)) {
+    const timeOfDay = parseTimeOfDay(tomorrowMatch[1], tomorrowMatch[2]);
+    if (!timeOfDay) {
       return notUnderstood(`"${tomorrowMatch[1]}:${tomorrowMatch[2]}" is not a valid time.`);
     }
     const result = now
       .plus({ days: 1 })
-      .set({ hour, minute, second: 0, millisecond: 0 });
+      .set({ ...timeOfDay, second: 0, millisecond: 0 });
     return understood(result);
   }
 
@@ -92,22 +113,12 @@ export function parseRequestedTime(input: ParseInput): ParsedTime {
     return understood(result);
   }
 
-  const isoWithOffset = requestedText.match(ISO_WITH_OFFSET);
-  if (isoWithOffset) {
-    const parsed = DateTime.fromISO(requestedText, { setZone: true });
-    if (!parsed.isValid) {
-      return notUnderstood(`"${requestedText}" looks like an ISO date-time but isn't valid.`);
-    }
-    return understood(parsed.setZone(leadTimezone));
+  if (ISO_WITH_OFFSET.test(requestedText)) {
+    return parseIso(requestedText, leadTimezone, true);
   }
 
-  const isoWithoutOffset = requestedText.match(ISO_WITHOUT_OFFSET);
-  if (isoWithoutOffset) {
-    const parsed = DateTime.fromISO(requestedText, { zone: leadTimezone });
-    if (!parsed.isValid) {
-      return notUnderstood(`"${requestedText}" looks like an ISO date-time but isn't valid.`);
-    }
-    return understood(parsed);
+  if (ISO_WITHOUT_OFFSET.test(requestedText)) {
+    return parseIso(requestedText, leadTimezone, false);
   }
 
   const weekdayMatch = requestedText.match(WEEKDAY_AT_TIME);
@@ -117,16 +128,15 @@ export function parseRequestedTime(input: ParseInput): ParsedTime {
     if (!targetWeekday) {
       return notUnderstood(`"${weekdayMatch[1]}" is not a day of the week.`);
     }
-    const hour = Number(weekdayMatch[2]);
-    const minute = Number(weekdayMatch[3]);
-    if (!isValidHourMinute(hour, minute)) {
+    const timeOfDay = parseTimeOfDay(weekdayMatch[2], weekdayMatch[3]);
+    if (!timeOfDay) {
       return notUnderstood(`"${weekdayMatch[2]}:${weekdayMatch[3]}" is not a valid time.`);
     }
 
     const daysUntil = (targetWeekday - now.weekday + 7) % 7;
     let result = now
       .plus({ days: daysUntil })
-      .set({ hour, minute, second: 0, millisecond: 0 });
+      .set({ ...timeOfDay, second: 0, millisecond: 0 });
 
     // Same weekday, but that slot has already passed today -> next week.
     if (daysUntil === 0 && result < now) {

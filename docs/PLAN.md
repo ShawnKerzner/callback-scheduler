@@ -34,8 +34,14 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 - Weekday + time, any other day -> next occurrence (1-6 days out).
 - `tomorrow at HH:MM` computed from the lead's *local* calendar date
   (converted from `received_at` via `leadTimezone`), not the UTC date.
-- `in N hours` / `in N minutes` computed as elapsed real time on the UTC
-  instant, not wall-clock arithmetic -> correct across a DST change.
+- `in N hours` / `in N minutes` -> decision: this is a *duration* promise
+  ("wait this long"), not a clock-face target, so it's computed as
+  elapsed real time on the UTC instant, not wall-clock arithmetic. On a
+  DST night this can land on a different clock number than naive
+  "add N to the hour" would (e.g. 1:00am + "in 2 hours" lands on 4:00am,
+  not 3:00am, the same way a 2-hour flight that crosses a DST boundary
+  lands after 2 real hours in the air, not when the ground clock says
+  +2) -- see test 12.
 - ISO date-time with an explicit offset/`Z` -> unambiguous instant.
 - ISO date-time with no offset -> decision: interpreted as wall-clock time
   *in the lead's time zone*, consistent with every other phrasing.
@@ -87,6 +93,7 @@ boundary — see `api/src/scheduling/parser.test.ts`.
 | Frontend scaffold | Vite vs Create React App | Vite — CRA is deprecated. |
 | Time zone library | Luxon vs date-fns-tz vs Temporal polyfill | Luxon — clean IANA zone handling and DST-safe arithmetic, good fit for "set zone, add duration, format" calls we need in the parser and window logic. (Confirm in chunk 2/3 once we see the actual calls needed.) |
 | Parsing approach | (a) hand-written strict parser (b) chrono-node (c) LLM | Chose (a). "No guessing" has to be the *default* behavior of unmatched input, not a filter bolted onto a library that's built to always guess (chrono-node) or a non-deterministic model call that needs network (LLM, which also conflicts with "tests must run without network access"). Only 4 phrasings are required, so hand-rolling is cheap, and every accept/reject decision is a line of code defensible line-by-line in the review call. |
+| "In N hours/minutes" across DST | (a) elapsed real time on the UTC instant (b) naive wall-clock + N | Chose (a). Treated "in N hours" as a duration promise (wait N real hours), not a clock-face target — same reasoning as a 2-hour flight crossing a DST change landing after 2 real hours in the air, not at "departure time + 2" on the ground clock. (b) would mean a lead who said "in 2 hours" on a spring-forward night actually only waited 1 real hour. |
 | Web dev port | Vite default 5173 vs 5174 | 5174. Discovered during chunk 1 evidence: another project's dev server on this machine already owns 5173 on `127.0.0.1`/`::1`, and Docker's forwarded port lost to it under `localhost`. Moved our port rather than touching an unrelated process. |
 | CORS on the API | Open (`cors()`, any origin) vs restricted to the web dev origin | Open. Auth is explicitly out of scope and this is local-only; a same-origin or allow-list policy would be real production hygiene but adds nothing here except another env var to keep in sync between `api` and `web`. Worth flagging as a "before going live" item in the design note. |
 

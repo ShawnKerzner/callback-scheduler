@@ -181,3 +181,8 @@ done and tested. Remaining: chunk 6 (POST /callbacks + concurrency
 test), chunk 7 (GET /callbacks), chunk 8-9 (React), chunk 10 (wrap-up).
 Will flag explicitly at ~5.5 hours to switch to wrap-up per the kickoff
 doc, even if a chunk is mid-flight.
+
+**Break:** paused at 13:45, resumed 16:05 (2026-11-03) for lunch. This
+gap doesn't count against the working-time budget -- tracking active
+work time, not wall-clock time including breaks. ~2.5 active hours
+spent as of this resume point.

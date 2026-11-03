@@ -8,7 +8,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 |---|---|---|---|
 | 0 | Scope and architecture | Done | — |
 | 1 | One-command skeleton (docker compose: Postgres + API health + web hello) | Done | — |
-| 2 | Parser (pure function) | Not started | — |
+| 2 | Parser (pure function) | Done | — |
 | 3 | Calling window (pure function) | Not started | — |
 | 4 | Scheduling decision (pure function, combines 2+3) | Not started | — |
 | 5 | Database layer (schema, migration, idempotent insert) | Not started | — |
@@ -27,7 +27,32 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
   original, no conflict error.
 
 ### Chunk 2 — Parser
-(to be filled in chunk 2)
+- Weekday + time, same weekday, before the time today -> today.
+- Weekday + time, same weekday, after the time today -> rolls to next week
+  (decision: the parser resolves this itself rather than leaving a
+  same-day-but-past result for the past-time policy to catch).
+- Weekday + time, any other day -> next occurrence (1-6 days out).
+- `tomorrow at HH:MM` computed from the lead's *local* calendar date
+  (converted from `received_at` via `leadTimezone`), not the UTC date.
+- `in N hours` / `in N minutes` computed as elapsed real time on the UTC
+  instant, not wall-clock arithmetic -> correct across a DST change.
+- ISO date-time with an explicit offset/`Z` -> unambiguous instant.
+- ISO date-time with no offset -> decision: interpreted as wall-clock time
+  *in the lead's time zone*, consistent with every other phrasing.
+- Unmatched text (any string matching none of the 4 patterns) ->
+  `not_understood` by construction, not a special case.
+- Invalid `lead_timezone` -> `not_understood`, reason names the bad zone.
+  Caught here (first place the zone is actually used), not at the HTTP
+  layer.
+- Scope boundary: an ISO date-time that's already in the past is still
+  `understood` by the parser — rejecting past times is the past-time
+  policy's job (chunk 4), not the parser's. This is also why "already in
+  the past" only realistically happens on the raw-ISO path; every other
+  phrasing resolves to the future by construction.
+
+13 unit tests cover all of the above, including a DST-crossing `in 2
+hours` and a `tomorrow` said at 23:50 local that crosses the UTC day
+boundary — see `api/src/scheduling/parser.test.ts`.
 
 ### Chunk 3 — Calling window
 (to be filled in chunk 3)
@@ -61,6 +86,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | Test runner | Vitest vs Jest | Vitest — native TS/ESM support, fast, Jest-compatible API. |
 | Frontend scaffold | Vite vs Create React App | Vite — CRA is deprecated. |
 | Time zone library | Luxon vs date-fns-tz vs Temporal polyfill | Luxon — clean IANA zone handling and DST-safe arithmetic, good fit for "set zone, add duration, format" calls we need in the parser and window logic. (Confirm in chunk 2/3 once we see the actual calls needed.) |
+| Parsing approach | (a) hand-written strict parser (b) chrono-node (c) LLM | Chose (a). "No guessing" has to be the *default* behavior of unmatched input, not a filter bolted onto a library that's built to always guess (chrono-node) or a non-deterministic model call that needs network (LLM, which also conflicts with "tests must run without network access"). Only 4 phrasings are required, so hand-rolling is cheap, and every accept/reject decision is a line of code defensible line-by-line in the review call. |
 | Web dev port | Vite default 5173 vs 5174 | 5174. Discovered during chunk 1 evidence: another project's dev server on this machine already owns 5173 on `127.0.0.1`/`::1`, and Docker's forwarded port lost to it under `localhost`. Moved our port rather than touching an unrelated process. |
 | CORS on the API | Open (`cors()`, any origin) vs restricted to the web dev origin | Open. Auth is explicitly out of scope and this is local-only; a same-origin or allow-list policy would be real production hygiene but adds nothing here except another env var to keep in sync between `api` and `web`. Worth flagging as a "before going live" item in the design note. |
 

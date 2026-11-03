@@ -22,6 +22,13 @@ live change in the review call.
   `npm run migrate`.
 - `api/migrations/` — empty for now; chunk 5 adds the first real migration
   (the `callbacks` table).
+- `src/scheduling/parser.ts` — pure function `parseRequestedTime`: text +
+  `received_at` + `lead_timezone` -> a local date-time in the lead's zone,
+  or `not_understood` + a reason. No DB, no HTTP. Does not enforce the
+  calling window or reject past times — that's chunks 3/4.
+- `src/scheduling/parser.test.ts` — 13 unit tests covering all 4 supported
+  phrasings, the same-weekday roll-forward rule, a UTC/local day-boundary
+  case, a DST-crossing case, and the "no guessing" / invalid-zone cases.
 
 ## `web/`
 

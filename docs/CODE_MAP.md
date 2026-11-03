@@ -37,6 +37,15 @@ live change in the review call.
   boundaries, before/after moves, weekend-inside vs. weekend-before the
   window, Friday/Saturday-night rollover, a non-Mon-Fri working week, and
   the brief's 09:00-20:00 live-change example.
+- `src/scheduling/decision.ts` — pure function `decideCallback`: wires
+  parser -> past-time check -> window in a fixed order into one result,
+  `{ status: "scheduled", ... }` or `{ status: "not_scheduled", reason }`.
+  No DB, no HTTP. This is the function chunk 6's POST /callbacks will
+  call.
+- `src/scheduling/decision.test.ts` — 7 unit tests covering both window
+  outcomes end to end, unparseable text, past-time rejection (including
+  a past time that's also outside window hours, proving the check order),
+  an invalid zone, and a non-US lead zone (Tokyo).
 
 ## `web/`
 

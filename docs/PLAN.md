@@ -10,7 +10,7 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | 1 | One-command skeleton (docker compose: Postgres + API health + web hello) | Done | — |
 | 2 | Parser (pure function) | Done | — |
 | 3 | Calling window (pure function) | Done | — |
-| 4 | Scheduling decision (pure function, combines 2+3) | Not started | — |
+| 4 | Scheduling decision (pure function, combines 2+3) | Done | — |
 | 5 | Database layer (schema, migration, idempotent insert) | Not started | — |
 | 6 | `POST /callbacks` (+ concurrency test) | Not started | — |
 | 7 | `GET /callbacks?lead_id=` | Not started | — |
@@ -86,7 +86,24 @@ hardcoding, drives the skip), and the brief's own 09:00-20:00 live-change
 example. See `api/src/scheduling/window.test.ts`.
 
 ### Chunk 4 — Scheduling decision
-(to be filled in chunk 4)
+- Fixed order: parse -> past-time check (on the raw parsed time) ->
+  window. A past request is rejected outright and never reaches the
+  window function -- the window never gets a chance to "fix" a past
+  time into a future one, which would be inventing a time (rule 2).
+- `not_scheduled` is uniform (`{ status, reason }`) regardless of
+  whether the cause was "not understood" or "in the past" -- the caller
+  (chunk 6) doesn't need to distinguish them structurally, just display
+  the reason.
+- Scope boundary: this chunk's tests cover rules 1 and 2 end-to-end,
+  combined, plus the past-time policy. They do NOT cover the
+  concurrency half of rule 3 (exactly once under a simultaneous
+  duplicate) -- that needs real Postgres and is chunk 6.
+
+7 tests cover both window outcomes combined with parsing, the past-time
+rejection (including a past time that's also outside window hours, to
+prove the ordering), an invalid zone passed straight through, and a
+non-US lead zone (Tokyo) end to end. See
+`api/src/scheduling/decision.test.ts`.
 
 ### Chunk 6 — POST /callbacks
 (to be filled in chunk 6)

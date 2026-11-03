@@ -6,8 +6,8 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 
 | # | Chunk | Status | Time spent |
 |---|---|---|---|
-| 0 | Scope and architecture | In progress | — |
-| 1 | One-command skeleton (docker compose: Postgres + API health + web hello) | Not started | — |
+| 0 | Scope and architecture | Done | — |
+| 1 | One-command skeleton (docker compose: Postgres + API health + web hello) | Done | — |
 | 2 | Parser (pure function) | Not started | — |
 | 3 | Calling window (pure function) | Not started | — |
 | 4 | Scheduling decision (pure function, combines 2+3) | Not started | — |
@@ -61,6 +61,8 @@ KompanionAI Callback Scheduler take-home. Budget: 5–7 hours, stop at 7.
 | Test runner | Vitest vs Jest | Vitest — native TS/ESM support, fast, Jest-compatible API. |
 | Frontend scaffold | Vite vs Create React App | Vite — CRA is deprecated. |
 | Time zone library | Luxon vs date-fns-tz vs Temporal polyfill | Luxon — clean IANA zone handling and DST-safe arithmetic, good fit for "set zone, add duration, format" calls we need in the parser and window logic. (Confirm in chunk 2/3 once we see the actual calls needed.) |
+| Web dev port | Vite default 5173 vs 5174 | 5174. Discovered during chunk 1 evidence: another project's dev server on this machine already owns 5173 on `127.0.0.1`/`::1`, and Docker's forwarded port lost to it under `localhost`. Moved our port rather than touching an unrelated process. |
+| CORS on the API | Open (`cors()`, any origin) vs restricted to the web dev origin | Open. Auth is explicitly out of scope and this is local-only; a same-origin or allow-list policy would be real production hygiene but adds nothing here except another env var to keep in sync between `api` and `web`. Worth flagging as a "before going live" item in the design note. |
 
 ## Time log
 

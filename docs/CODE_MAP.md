@@ -3,4 +3,28 @@
 One line per file, what it does. Updated every chunk — this is the map for the
 live change in the review call.
 
-_No code yet — chunk 1 adds the skeleton._
+## Root
+
+- `docker-compose.yml` — wires up `db` (Postgres), `api`, `web`; dev mode with
+  volume mounts for hot reload.
+- `.env.example` / `.env` — all config, including `CALLING_WINDOW_START` /
+  `CALLING_WINDOW_END` (the live-change knob).
+
+## `api/`
+
+- `src/index.ts` — Express app entrypoint. Runs migrations, then starts the
+  HTTP server. Currently just `GET /health`.
+- `src/db/pool.ts` — the single `pg.Pool`, built from `DATABASE_URL`.
+- `src/db/migrate.ts` — migration runner: creates `schema_migrations` if
+  missing, applies any new `.sql` file in `api/migrations/` in filename
+  order, inside a transaction per file. Exported as `runMigrations()` so
+  `index.ts` can run it on startup; also runnable standalone via
+  `npm run migrate`.
+- `api/migrations/` — empty for now; chunk 5 adds the first real migration
+  (the `callbacks` table).
+
+## `web/`
+
+- `src/main.tsx` — React root, mounts `<App />`.
+- `src/App.tsx` — currently a hello page: calls `GET /health` on the API and
+  shows reachable/unreachable. Chunk 8 replaces this with the real form.
